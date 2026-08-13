@@ -3,6 +3,10 @@
   background: var(--background);
 }
 
+.loadingPage {
+  opacity: 0;
+}
+
 .setupPage {
   display: grid;
   place-items: center;
@@ -90,6 +94,227 @@
 .setupForm .primaryButton {
   width: 100%;
   margin-top: 8px;
+}
+
+.configPage {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.configHeader,
+.drawHeader {
+  min-height: 72px;
+  padding: 14px clamp(20px, 4vw, 64px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+
+.configShell {
+  width: min(100%, 1040px);
+  margin: auto;
+  padding: clamp(48px, 8vw, 112px) clamp(20px, 5vw, 64px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+  align-items: start;
+  gap: clamp(48px, 8vw, 108px);
+}
+
+.configIntro h1 {
+  max-width: 520px;
+  font-size: clamp(48px, 7vw, 80px);
+  font-weight: 580;
+  line-height: 0.95;
+  letter-spacing: -0.065em;
+}
+
+.configIntro > p:last-child {
+  max-width: 430px;
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.configPanel {
+  padding: clamp(24px, 4vw, 38px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.configPanel .primaryButton {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.configSummary {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.configSummary > div {
+  padding: 18px 0;
+  display: grid;
+  gap: 5px;
+}
+
+.configSummary > div + div {
+  padding-left: 20px;
+  border-left: 1px solid var(--line);
+}
+
+.configSummary span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.configSummary strong {
+  font-family: var(--font-geist-mono);
+  font-size: 22px;
+  font-weight: 620;
+}
+
+.drawPage {
+  min-height: 100dvh;
+}
+
+.drawHeader {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.backButton {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.backButton svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.backButton:active {
+  transform: translateX(-1px) scale(0.98);
+}
+
+.drawIdentity {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.drawIdentity span {
+  max-width: min(52vw, 560px);
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 680;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drawIdentity strong {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 540;
+}
+
+.drawHeader .poolCount {
+  justify-self: end;
+}
+
+.publicStage {
+  min-height: min(680px, calc(100dvh - 72px));
+  padding: 30px clamp(20px, 6vw, 88px) 52px;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.publicStage .stage {
+  min-height: 430px;
+}
+
+.publicStage .statusRow {
+  justify-content: center;
+}
+
+.publicStage .controls {
+  min-height: 50px;
+  align-items: center;
+}
+
+.publicStage .readyState h1,
+.publicStage .completeState h1 {
+  margin-top: 22px;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 590;
+  letter-spacing: -0.045em;
+}
+
+.restartConfirm {
+  width: min(100%, 680px);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--background);
+}
+
+.restartConfirm > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.restartConfirm strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.restartConfirm span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.restartConfirm > div:last-child {
+  display: flex;
+  gap: 8px;
+}
+
+.restartConfirm .primaryButton,
+.restartConfirm .secondaryButton {
+  min-height: 40px;
+}
+
+.drawError {
+  margin-top: 14px;
+  color: var(--error);
+  font-size: 12px;
+  text-align: center;
 }
 
 .header {
@@ -601,6 +826,11 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .backButton:hover {
+    border-color: var(--text);
+    background: var(--surface-strong);
+  }
+
   .resetButton:hover,
   .sampleButton:hover,
   .secondaryButton:hover {
@@ -654,6 +884,15 @@
     min-height: 570px;
     padding: 26px 20px 34px;
   }
+
+  .configShell {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .configIntro h1 {
+    font-size: clamp(46px, 12vw, 68px);
+  }
 }
 
 @media (max-width: 560px) {
@@ -706,6 +945,57 @@
 
   .winnerSlot {
     min-height: 126px;
+  }
+
+  .configHeader {
+    min-height: 64px;
+    padding: 10px 16px;
+  }
+
+  .configShell {
+    padding-top: 46px;
+    padding-bottom: 64px;
+  }
+
+  .drawHeader {
+    min-height: 68px;
+    padding: 12px 16px;
+  }
+
+  .backButton {
+    width: 40px;
+    height: 40px;
+  }
+
+  .drawIdentity span {
+    max-width: 48vw;
+    font-size: 13px;
+  }
+
+  .drawHeader .poolCount {
+    display: grid;
+    justify-items: end;
+    gap: 0;
+  }
+
+  .publicStage {
+    min-height: calc(100dvh - 68px);
+    padding: 22px 16px 32px;
+  }
+
+  .publicStage .stage {
+    min-height: 360px;
+  }
+
+  .restartConfirm {
+    padding: 16px;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .restartConfirm > div:last-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
