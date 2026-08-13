@@ -74,7 +74,7 @@
   outline: 0;
   background: var(--surface);
   color: var(--text);
-  font-size: 14px;
+  font-size: 16px;
   transition: border-color 180ms ease, background-color 180ms ease;
 }
 
@@ -658,20 +658,31 @@
 
 @media (max-width: 560px) {
   .header {
-    height: 64px;
-    padding: 0 16px;
+    height: auto;
+    min-height: 104px;
+    padding: 14px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
 
-  .poolCount {
-    display: none;
+  .headerActions {
+    justify-content: space-between;
+    gap: 12px;
   }
 
-  .headerButtons .resetButton:first-child {
-    display: none;
+  .headerButtons {
+    min-width: 0;
+    justify-content: flex-end;
+  }
+
+  .resetButton {
+    padding: 8px 10px;
+    font-size: 11px;
   }
 
   .eventIdentity strong {
-    max-width: 150px;
+    max-width: calc(100vw - 82px);
   }
 
   .statusRow span:last-child {
