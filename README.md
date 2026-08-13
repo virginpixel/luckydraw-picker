@@ -33,6 +33,6 @@ The `name` column is optional. Bib numbers must be present and unique.
 
 ## Deployment
 
-Pushes to `main` automatically build and deploy the static export through GitHub Actions. In the repository settings, set Pages source to **GitHub Actions**.
+Pushes to `main` automatically enable GitHub Pages, build the static export, and deploy it through GitHub Actions.
 
 The exported site is generated in `out`, which is also compatible with Cloudflare Pages. For Cloudflare, use `npm run build` as the build command and `out` as the output directory.
