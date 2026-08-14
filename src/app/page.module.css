@@ -144,9 +144,138 @@
   background: var(--surface);
 }
 
+.modeSelector {
+  padding: 4px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  border-radius: 12px;
+  background: var(--surface-strong);
+}
+
+.modeSelector button {
+  min-width: 0;
+  min-height: 54px;
+  padding: 8px 5px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 3px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease,
+    transform 180ms ease;
+}
+
+.modeSelector button span {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 8px;
+  font-weight: 520;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modeSelector button[aria-pressed="true"] {
+  background: var(--background);
+  color: var(--text);
+}
+
+.modeSelector button:active {
+  transform: scale(0.98);
+}
+
+.modePanel {
+  min-height: 208px;
+  padding-top: 26px;
+}
+
+.textareaLabel,
+.rangeHeading label {
+  display: block;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.entriesTextarea {
+  width: 100%;
+  min-height: 160px;
+  margin-top: 9px;
+  padding: 14px 15px;
+  resize: vertical;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  outline: 0;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.entriesTextarea::placeholder {
+  color: var(--muted);
+}
+
+.entriesTextarea:focus {
+  border-color: var(--accent-text);
+  background: var(--surface-strong);
+}
+
+.rangeHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.rangeHeading input {
+  width: 72px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  outline: 0;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+  font-family: var(--font-geist-mono);
+  font-size: 16px;
+  text-align: center;
+}
+
+.rangeInput {
+  width: 100%;
+  height: 28px;
+  margin-top: 26px;
+  accent-color: var(--accent-text);
+  cursor: pointer;
+}
+
+.rangeScale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-family: var(--font-geist-mono);
+  font-size: 9px;
+}
+
 .configPanel .primaryButton {
   width: 100%;
   margin-top: 20px;
+}
+
+.configPanel .primaryButton:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
 }
 
 .configSummary {
@@ -844,6 +973,10 @@
   .primaryButton:hover {
     background: var(--accent-hover);
   }
+
+  .modeSelector button:not([aria-pressed="true"]):hover {
+    color: var(--text);
+  }
 }
 
 @media (max-width: 820px) {
@@ -952,9 +1085,21 @@
     padding: 10px 16px;
   }
 
+  .configHeader .eventIdentity strong {
+    max-width: 120px;
+  }
+
   .configShell {
     padding-top: 46px;
     padding-bottom: 64px;
+  }
+
+  .configPanel {
+    padding: 20px;
+  }
+
+  .modeSelector button {
+    padding-inline: 3px;
   }
 
   .drawHeader {

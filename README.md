@@ -1,15 +1,18 @@
 # Lucky Draw Picker
 
-A responsive bib lucky draw app built with Next.js and React.
+A responsive, generic lucky draw app built with Next.js and React.
 
 ## Features
 
 - Create an event with a configurable number of winners
-- Import entrants from CSV using a required bib number and optional name
+- Paste entries with one entry per line
+- Generate an ordered number pool from 1 to 100
+- Import entries from CSV using a required number and optional name
 - Download a sample CSV
-- Roll bib numbers rapidly and stop on a candidate
-- Confirm winners or remove absent entrants
-- Prevent confirmed and absent bibs from returning to the draw
+- Roll entries rapidly at random and stop on a candidate
+- Confirm winners or remove unavailable entries
+- Prevent confirmed and removed entries from returning to the draw
+- Preserve the event and draw state in local storage
 - Responsive event controls and winner cards
 
 ## Local development
@@ -24,12 +27,12 @@ Open `http://localhost:3000`.
 ## CSV format
 
 ```csv
-bib number,name
+number,name
 1001,Aisha Khan
 1002,Daniel Lee
 ```
 
-The `name` column is optional. Bib numbers must be present and unique.
+The `name` column is optional. Numbers must be present and unique.
 
 ## Deployment
 

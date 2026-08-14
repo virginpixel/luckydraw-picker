@@ -2,27 +2,34 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { randomEntrant, useDrawStore } from "../draw-store";
+import { Entry, randomEntry, useDrawStore } from "../draw-store";
 import styles from "../page.module.css";
 
 export default function DrawPage() {
   const router = useRouter();
   const { state, setState, hydrated } = useDrawStore();
-  const [rollingEntrant, setRollingEntrant] = useState(
-    randomEntrant(state.available),
+  const [rollingEntry, setRollingEntry] = useState(
+    randomEntry(state.available),
   );
   const [drawKey, setDrawKey] = useState(0);
   const [confirmRestart, setConfirmRestart] = useState(false);
 
   const filledSlots = state.winners.filter(Boolean).length;
+  const poolExhausted =
+    state.available.length === 0 && !state.current && !state.isRolling;
   const drawComplete =
-    state.winners.length > 0 && filledSlots === state.winners.length;
+    state.winners.length > 0 &&
+    (filledSlots === state.winners.length || poolExhausted);
   const isFinalSelection =
-    Boolean(state.current) && filledSlots === state.winners.length - 1;
+    Boolean(state.current) &&
+    (filledSlots === state.winners.length - 1 || state.available.length === 1);
   const progressText = useMemo(
-    () => `${filledSlots} of ${state.winners.length} winner slots filled`,
-    [filledSlots, state.winners.length],
+    () => `${filledSlots} ${filledSlots === 1 ? "winner" : "winners"} selected`,
+    [filledSlots],
   );
+  const displayedWinners = drawComplete
+    ? state.winners.filter((winner): winner is Entry => Boolean(winner))
+    : state.winners;
 
   useEffect(() => {
     if (hydrated && !state.event) {
@@ -40,8 +47,8 @@ export default function DrawPage() {
     ).matches;
     const interval = window.setInterval(
       () => {
-        setRollingEntrant((previous) =>
-          randomEntrant(state.available, previous?.bib),
+        setRollingEntry((previous) =>
+          randomEntry(state.available, previous?.id),
         );
       },
       reducedMotion ? 120 : 24,
@@ -51,36 +58,37 @@ export default function DrawPage() {
   }, [state.available, state.isRolling]);
 
   function beginRolling(pool = state.available) {
-    const first = randomEntrant(pool);
+    const first = randomEntry(pool);
     if (!first) {
       setState((current) => ({
         ...current,
         current: null,
         isRolling: false,
-        error: "There are no eligible bib numbers left to draw.",
+        message: `${filledSlots} ${filledSlots === 1 ? "winner" : "winners"} selected`,
+        error: "",
       }));
       return false;
     }
 
-    setRollingEntrant(first);
+    setRollingEntry(first);
     setState((current) => ({
       ...current,
       current: null,
       isRolling: true,
-      message: "Numbers are rolling. Stop when you are ready",
+      message: "Entries are rolling. Stop when you are ready",
       error: "",
     }));
     return true;
   }
 
   function stopDraw() {
-    if (!state.isRolling || !rollingEntrant) {
+    if (!state.isRolling || !rollingEntry) {
       return;
     }
 
     setState((current) => ({
       ...current,
-      current: rollingEntrant,
+      current: rollingEntry,
       isRolling: false,
       message: "",
     }));
@@ -100,23 +108,26 @@ export default function DrawPage() {
     const updatedWinners = [...state.winners];
     updatedWinners[openSlot] = state.current;
     const updatedAvailable = state.available.filter(
-      (entrant) => entrant.bib !== state.current?.bib,
+      (entry) => entry.id !== state.current?.id,
     );
-    const finalWinner = openSlot === state.winners.length - 1;
+    const drawEnds =
+      openSlot === state.winners.length - 1 || updatedAvailable.length === 0;
+    const selectedCount = openSlot + 1;
 
     setState((current) => ({
       ...current,
       winners: updatedWinners,
       available: updatedAvailable,
       current: null,
-      isRolling: !finalWinner,
-      message: finalWinner
-        ? "All winner slots are filled"
-        : `Slot ${openSlot + 1} confirmed. Rolling the next draw`,
+      isRolling: !drawEnds,
+      message: drawEnds
+        ? `${selectedCount} ${selectedCount === 1 ? "winner" : "winners"} selected`
+        : `Winner ${selectedCount} confirmed. Rolling the next entry`,
+      error: "",
     }));
 
-    if (!finalWinner) {
-      setRollingEntrant(randomEntrant(updatedAvailable));
+    if (!drawEnds) {
+      setRollingEntry(randomEntry(updatedAvailable));
     }
   }
 
@@ -125,41 +136,39 @@ export default function DrawPage() {
       return;
     }
 
-    const removedBib = state.current.bib;
+    const removedValue = state.current.value;
     const updatedAvailable = state.available.filter(
-      (entrant) => entrant.bib !== removedBib,
+      (entry) => entry.id !== state.current?.id,
     );
     const continuing = updatedAvailable.length > 0;
 
-    setRollingEntrant(randomEntrant(updatedAvailable));
+    setRollingEntry(randomEntry(updatedAvailable));
     setState((current) => ({
       ...current,
       available: updatedAvailable,
       current: null,
       isRolling: continuing,
       message: continuing
-        ? `Bib ${removedBib} removed. Rolling again`
-        : `Bib ${removedBib} removed from the draw`,
-      error: continuing
-        ? ""
-        : "There are no eligible bib numbers left. Import more entrants or return to configuration.",
+        ? `${removedValue} removed. Rolling again`
+        : `${filledSlots} ${filledSlots === 1 ? "winner" : "winners"} selected. No entries remain`,
+      error: "",
     }));
   }
 
   function restartDraw() {
     setState((current) => ({
       ...current,
-      available: current.entrants,
+      available: current.entries,
       winners: Array.from(
         { length: current.event?.winnerCount ?? 0 },
         () => null,
       ),
       current: null,
       isRolling: false,
-      message: `${current.entrants.length} entrants ready to draw`,
+      message: `${current.entries.length} entries ready to draw`,
       error: "",
     }));
-    setRollingEntrant(randomEntrant(state.entrants));
+    setRollingEntry(randomEntry(state.entries));
     setConfirmRestart(false);
   }
 
@@ -182,7 +191,7 @@ export default function DrawPage() {
         </button>
         <div className={styles.drawIdentity}>
           <span>{state.event.name}</span>
-          <strong>{filledSlots}/{state.winners.length} winners</strong>
+          <strong>{progressText}</strong>
         </div>
         <div className={styles.poolCount}>
           <strong>{state.available.length}</strong>
@@ -190,7 +199,10 @@ export default function DrawPage() {
         </div>
       </header>
 
-      <section className={styles.publicStage} aria-live={state.isRolling ? "off" : "polite"}>
+      <section
+        className={styles.publicStage}
+        aria-live={state.isRolling ? "off" : "polite"}
+      >
         <div className={styles.statusRow}>
           <span>{state.message}</span>
         </div>
@@ -198,25 +210,25 @@ export default function DrawPage() {
         <div className={styles.stage}>
           {drawComplete ? (
             <div className={styles.completeState}>
-              <span>{filledSlots} / {state.winners.length}</span>
-              <h1>Winner lineup complete.</h1>
+              <span>{filledSlots}</span>
+              <h1>{filledSlots === 1 ? "Winner selected." : "Winners selected."}</h1>
             </div>
-          ) : state.isRolling && rollingEntrant ? (
-            <div className={styles.rollingEntrant} key={rollingEntrant.bib}>
-              <p>Rolling bibs</p>
-              <strong>{rollingEntrant.bib}</strong>
-              <span>{rollingEntrant.name || "Name not provided"}</span>
+          ) : state.isRolling && rollingEntry ? (
+            <div className={styles.rollingEntrant} key={rollingEntry.id}>
+              <p>Rolling entries</p>
+              <strong>{rollingEntry.value}</strong>
+              {rollingEntry.name ? <span>{rollingEntry.name}</span> : null}
             </div>
           ) : state.current ? (
             <div className={styles.drawnEntrant} key={drawKey}>
-              <p>Selected bib</p>
-              <strong>{state.current.bib}</strong>
-              <span>{state.current.name || "Name not provided"}</span>
+              <p>Selected entry</p>
+              <strong>{state.current.value}</strong>
+              {state.current.name ? <span>{state.current.name}</span> : null}
             </div>
           ) : (
             <div className={styles.readyState}>
               <span className={styles.readyNumber}>?</span>
-              <h1>Draw your first bib</h1>
+              <h1>Draw your first entry</h1>
               <p>
                 {state.winners.length} winner {state.winners.length === 1 ? "slot is" : "slots are"} waiting.
               </p>
@@ -231,7 +243,7 @@ export default function DrawPage() {
               onClick={() => beginRolling()}
               type="button"
             >
-              Draw a bib
+              Draw an entry
             </button>
           ) : null}
           {!drawComplete && state.isRolling ? (
@@ -257,7 +269,7 @@ export default function DrawPage() {
                 onClick={retake}
                 type="button"
               >
-                Absent, retake
+                Remove and retake
               </button>
             </>
           ) : null}
@@ -273,7 +285,7 @@ export default function DrawPage() {
           {drawComplete && confirmRestart ? (
             <div className={styles.restartConfirm} role="alert">
               <div>
-                <strong>Start over with this entrant list?</strong>
+                <strong>Start over with this entry list?</strong>
                 <span>Current winners will be cleared.</span>
               </div>
               <div>
@@ -305,24 +317,23 @@ export default function DrawPage() {
       <section className={styles.winnersSection}>
         <div className={styles.winnersHeading}>
           <div>
-            <h2>Winner slots</h2>
+            <h2>Winners</h2>
             <p>{progressText}</p>
           </div>
-          <span>{filledSlots}/{state.winners.length}</span>
         </div>
         <div className={styles.winnerGrid}>
-          {state.winners.map((winner, index) => (
+          {displayedWinners.map((winner, index) => (
             <article
               className={`${styles.winnerSlot} ${winner ? styles.filledSlot : ""}`}
-              key={index}
+              key={winner?.id ?? index}
             >
               <span className={styles.slotIndex}>
                 {String(index + 1).padStart(2, "0")}
               </span>
               {winner ? (
                 <div className={styles.winnerDetails}>
-                  <strong>{winner.bib}</strong>
-                  <span>{winner.name || "Name not provided"}</span>
+                  <strong>{winner.value}</strong>
+                  {winner.name ? <span>{winner.name}</span> : null}
                 </div>
               ) : (
                 <p>Waiting for a winner</p>

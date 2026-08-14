@@ -3,8 +3,13 @@
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  entriesFromText,
+  Entry,
+  EntryMode,
   initialDrawState,
-  parseEntrantsCsv,
+  mockEntries,
+  numberedEntries,
+  parseEntriesCsv,
   useDrawStore,
 } from "./draw-store";
 import styles from "./page.module.css";
@@ -16,6 +21,22 @@ export default function Home() {
   const [winnerCount, setWinnerCount] = useState("3");
   const [setupError, setSetupError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function resetEntries(entries: Entry[], message: string) {
+    setState((current) => ({
+      ...current,
+      entries,
+      available: entries,
+      winners: Array.from(
+        { length: current.event?.winnerCount ?? 0 },
+        () => null,
+      ),
+      current: null,
+      isRolling: false,
+      message,
+      error: "",
+    }));
+  }
 
   function createEvent(submission: FormEvent<HTMLFormElement>) {
     submission.preventDefault();
@@ -35,11 +56,11 @@ export default function Home() {
     setState((current) => ({
       ...current,
       event: { name, winnerCount: count },
-      available: current.entrants,
+      available: current.entries,
       winners: Array.from({ length: count }, () => null),
       current: null,
       isRolling: false,
-      message: `${current.entrants.length} entrants ready to draw`,
+      message: `${current.entries.length} entries ready to draw`,
       error: "",
     }));
     setSetupError("");
@@ -52,6 +73,44 @@ export default function Home() {
     setSetupError("");
   }
 
+  function resetEvent() {
+    setState((current) => ({
+      ...current,
+      available: current.entries,
+      winners: Array.from(
+        { length: current.event?.winnerCount ?? 0 },
+        () => null,
+      ),
+      current: null,
+      isRolling: false,
+      message: `${current.entries.length} entries ready to draw`,
+      error: "",
+    }));
+  }
+
+  function selectMode(mode: EntryMode) {
+    if (mode === "csv") {
+      setState((current) => ({
+        ...current,
+        entryMode: mode,
+        fileName: "Sample entries.csv",
+      }));
+      resetEntries(mockEntries, `${mockEntries.length} sample entries ready`);
+      return;
+    }
+
+    if (mode === "manual") {
+      const entries = entriesFromText(state.manualText);
+      setState((current) => ({ ...current, entryMode: mode }));
+      resetEntries(entries, `${entries.length} pasted entries ready`);
+      return;
+    }
+
+    const entries = numberedEntries(state.numberTotal);
+    setState((current) => ({ ...current, entryMode: mode }));
+    resetEntries(entries, `Numbers 1 to ${state.numberTotal} ready`);
+  }
+
   async function importCsv(fileEvent: ChangeEvent<HTMLInputElement>) {
     const file = fileEvent.target.files?.[0];
     fileEvent.target.value = "";
@@ -60,10 +119,11 @@ export default function Home() {
     }
 
     try {
-      const imported = parseEntrantsCsv(await file.text());
+      const imported = parseEntriesCsv(await file.text());
       setState((current) => ({
         ...current,
-        entrants: imported,
+        entryMode: "csv",
+        entries: imported,
         available: imported,
         winners: Array.from(
           { length: current.event?.winnerCount ?? 0 },
@@ -72,11 +132,8 @@ export default function Home() {
         current: null,
         isRolling: false,
         fileName: file.name,
-        message: `${imported.length} entrants imported and ready`,
-        error:
-          current.event && imported.length < current.event.winnerCount
-            ? `This list has ${imported.length} entrants for ${current.event.winnerCount} winner slots.`
-            : "",
+        message: `${imported.length} entries imported and ready`,
+        error: "",
       }));
     } catch (importError) {
       setState((current) => ({
@@ -89,6 +146,44 @@ export default function Home() {
     }
   }
 
+  function updateManualEntries(input: ChangeEvent<HTMLTextAreaElement>) {
+    const manualText = input.target.value;
+    const entries = entriesFromText(manualText);
+    setState((current) => ({
+      ...current,
+      manualText,
+      entries,
+      available: entries,
+      winners: Array.from(
+        { length: current.event?.winnerCount ?? 0 },
+        () => null,
+      ),
+      current: null,
+      isRolling: false,
+      message: `${entries.length} pasted entries ready`,
+      error: "",
+    }));
+  }
+
+  function updateNumberTotal(total: number) {
+    const safeTotal = Math.min(100, Math.max(1, total));
+    const entries = numberedEntries(safeTotal);
+    setState((current) => ({
+      ...current,
+      numberTotal: safeTotal,
+      entries,
+      available: entries,
+      winners: Array.from(
+        { length: current.event?.winnerCount ?? 0 },
+        () => null,
+      ),
+      current: null,
+      isRolling: false,
+      message: `Numbers 1 to ${safeTotal} ready`,
+      error: "",
+    }));
+  }
+
   if (!hydrated) {
     return <main className={`${styles.page} ${styles.loadingPage}`} />;
   }
@@ -99,8 +194,8 @@ export default function Home() {
         <section className={styles.setupShell}>
           <div className={styles.setupIntro}>
             <div className={styles.brand}>
-              <span className={styles.brandMark}>B</span>
-              <span>Bib Draw</span>
+              <span className={styles.brandMark}>L</span>
+              <span>Lucky Draw</span>
             </div>
             <div>
               <p className={styles.eyebrow}>Create an event</p>
@@ -154,54 +249,150 @@ export default function Home() {
     <main className={`${styles.page} ${styles.configPage}`}>
       <header className={styles.configHeader}>
         <div className={styles.brand}>
-          <span className={styles.brandMark}>B</span>
+          <span className={styles.brandMark}>L</span>
           <div className={styles.eventIdentity}>
-            <span>Bib Draw</span>
+            <span>Lucky Draw</span>
             <strong>{state.event.name}</strong>
           </div>
         </div>
-        <button className={styles.resetButton} onClick={startNewEvent} type="button">
-          New event
-        </button>
+        <div className={styles.headerButtons}>
+          <button className={styles.resetButton} onClick={resetEvent} type="button">
+            Reset event
+          </button>
+          <button className={styles.resetButton} onClick={startNewEvent} type="button">
+            New event
+          </button>
+        </div>
       </header>
 
       <section className={styles.configShell}>
         <div className={styles.configIntro}>
-          <p className={styles.eyebrow}>Entrant list</p>
+          <p className={styles.eyebrow}>Entry source</p>
           <h1>Prepare the draw.</h1>
-          <p>Import the final bib list before opening the public draw screen.</p>
+          <p>Choose one way to build the pool, then open the draw screen.</p>
         </div>
 
         <div className={styles.configPanel}>
-          <div className={styles.fileMeta}>
-            <span className={styles.fileBadge}>CSV</span>
-            <div>
-              <strong>{state.fileName}</strong>
-              <span>{state.entrants.length} valid entrants</span>
-            </div>
-          </div>
-          <input
-            ref={fileInputRef}
-            className={styles.fileInput}
-            type="file"
-            accept=".csv,text/csv"
-            onChange={importCsv}
-          />
-          <div className={styles.importActions}>
+          <div className={styles.modeSelector} aria-label="Entry source">
             <button
-              className={styles.importButton}
-              onClick={() => fileInputRef.current?.click()}
               type="button"
+              aria-pressed={state.entryMode === "csv"}
+              onClick={() => selectMode("csv")}
             >
-              Import CSV
+              CSV
+              <span>Number + name</span>
             </button>
-            <a className={styles.sampleButton} href="sample-entrants.csv" download>
-              Download sample
-            </a>
+            <button
+              type="button"
+              aria-pressed={state.entryMode === "manual"}
+              onClick={() => selectMode("manual")}
+            >
+              Paste
+              <span>One per line</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={state.entryMode === "numbers"}
+              onClick={() => selectMode("numbers")}
+            >
+              Numbers
+              <span>1 to 100</span>
+            </button>
           </div>
-          <p className={styles.helperText}>
-            Required: bib number. Optional: name.
-          </p>
+
+          {state.entryMode === "csv" ? (
+            <div className={styles.modePanel}>
+              <div className={styles.fileMeta}>
+                <span className={styles.fileBadge}>CSV</span>
+                <div>
+                  <strong>{state.fileName}</strong>
+                  <span>{state.entries.length} valid entries</span>
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                className={styles.fileInput}
+                type="file"
+                accept=".csv,text/csv"
+                onChange={importCsv}
+              />
+              <div className={styles.importActions}>
+                <button
+                  className={styles.importButton}
+                  onClick={() => fileInputRef.current?.click()}
+                  type="button"
+                >
+                  Import CSV
+                </button>
+                <a
+                  className={styles.sampleButton}
+                  href="sample-entries.csv"
+                  download
+                >
+                  Download sample
+                </a>
+              </div>
+              <p className={styles.helperText}>
+                Required: number. Optional: name.
+              </p>
+            </div>
+          ) : null}
+
+          {state.entryMode === "manual" ? (
+            <div className={styles.modePanel}>
+              <label className={styles.textareaLabel} htmlFor="manual-entries">
+                Entries
+              </label>
+              <textarea
+                id="manual-entries"
+                className={styles.entriesTextarea}
+                value={state.manualText}
+                onChange={updateManualEntries}
+                placeholder={"Blue team\nTable 12\nAlex Morgan"}
+              />
+              <p className={styles.helperText}>
+                Each non-empty line becomes one entry.
+              </p>
+            </div>
+          ) : null}
+
+          {state.entryMode === "numbers" ? (
+            <div className={styles.modePanel}>
+              <div className={styles.rangeHeading}>
+                <label htmlFor="number-range">Number of entries</label>
+                <input
+                  aria-label="Number of entries"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={state.numberTotal}
+                  onChange={(input) => {
+                    const total = Number(input.target.value);
+                    if (Number.isInteger(total) && total >= 1 && total <= 100) {
+                      updateNumberTotal(total);
+                    }
+                  }}
+                />
+              </div>
+              <input
+                id="number-range"
+                className={styles.rangeInput}
+                type="range"
+                min="1"
+                max="100"
+                value={state.numberTotal}
+                onChange={(input) => updateNumberTotal(Number(input.target.value))}
+              />
+              <div className={styles.rangeScale}>
+                <span>1</span>
+                <span>100</span>
+              </div>
+              <p className={styles.helperText}>
+                Creates the ordered entries 1 through {state.numberTotal}.
+              </p>
+            </div>
+          ) : null}
+
           {state.error ? (
             <p className={styles.error} role="alert">
               {state.error}
@@ -209,8 +400,8 @@ export default function Home() {
           ) : null}
           <div className={styles.configSummary}>
             <div>
-              <span>Entrants</span>
-              <strong>{state.entrants.length}</strong>
+              <span>Entries</span>
+              <strong>{state.entries.length}</strong>
             </div>
             <div>
               <span>Winners</span>
@@ -221,7 +412,7 @@ export default function Home() {
             className={styles.primaryButton}
             onClick={() => router.push("/draw")}
             type="button"
-            disabled={state.entrants.length === 0}
+            disabled={state.entries.length === 0}
           >
             Start draw
           </button>

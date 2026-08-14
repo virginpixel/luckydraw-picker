@@ -2,10 +2,13 @@
 
 import { useSyncExternalStore } from "react";
 
-export type Entrant = {
-  bib: string;
+export type Entry = {
+  id: string;
+  value: string;
   name?: string;
 };
+
+export type EntryMode = "csv" | "manual" | "numbers";
 
 export type EventConfig = {
   name: string;
@@ -14,54 +17,60 @@ export type EventConfig = {
 
 export type DrawState = {
   event: EventConfig | null;
-  entrants: Entrant[];
-  available: Entrant[];
-  winners: (Entrant | null)[];
-  current: Entrant | null;
+  entries: Entry[];
+  available: Entry[];
+  winners: (Entry | null)[];
+  current: Entry | null;
   isRolling: boolean;
+  entryMode: EntryMode;
+  manualText: string;
+  numberTotal: number;
   fileName: string;
   message: string;
   error: string;
 };
 
-const storageKey = "bib-draw-state-v1";
+const storageKey = "lucky-draw-state-v2";
 
-export const mockEntrants: Entrant[] = [
-  { bib: "0142", name: "Maya Patel" },
-  { bib: "0187", name: "Daniel Kim" },
-  { bib: "0224", name: "Amina Yusuf" },
-  { bib: "0291", name: "Leo Martins" },
-  { bib: "0316", name: "Sofia Reyes" },
-  { bib: "0388", name: "Noah Williams" },
-  { bib: "0413", name: "Priya Nair" },
-  { bib: "0479", name: "Omar Hassan" },
-  { bib: "0521", name: "Eleanor Price" },
-  { bib: "0576", name: "Mateo Silva" },
-  { bib: "0634", name: "Hana Suzuki" },
-  { bib: "0698", name: "Jonas Berg" },
-  { bib: "0725", name: "Nadia Rahman" },
-  { bib: "0782", name: "Lucas Moreno" },
-  { bib: "0819", name: "Zara Ahmed" },
-  { bib: "0863", name: "Theo Bennett" },
-  { bib: "0914", name: "Mei Chen" },
-  { bib: "0971", name: "Sam Okafor" },
-  { bib: "1028", name: "Clara Fischer" },
-  { bib: "1084", name: "Ibrahim Ali" },
-  { bib: "1137", name: "Lena Kowalski" },
-  { bib: "1195", name: "Ravi Menon" },
-  { bib: "1246", name: "Amara Brooks" },
-  { bib: "1302", name: "Nico Laurent" },
+export const mockEntries: Entry[] = [
+  { id: "demo-0142", value: "0142", name: "Maya Patel" },
+  { id: "demo-0187", value: "0187", name: "Daniel Kim" },
+  { id: "demo-0224", value: "0224", name: "Amina Yusuf" },
+  { id: "demo-0291", value: "0291", name: "Leo Martins" },
+  { id: "demo-0316", value: "0316", name: "Sofia Reyes" },
+  { id: "demo-0388", value: "0388", name: "Noah Williams" },
+  { id: "demo-0413", value: "0413", name: "Priya Nair" },
+  { id: "demo-0479", value: "0479", name: "Omar Hassan" },
+  { id: "demo-0521", value: "0521", name: "Eleanor Price" },
+  { id: "demo-0576", value: "0576", name: "Mateo Silva" },
+  { id: "demo-0634", value: "0634", name: "Hana Suzuki" },
+  { id: "demo-0698", value: "0698", name: "Jonas Berg" },
+  { id: "demo-0725", value: "0725", name: "Nadia Rahman" },
+  { id: "demo-0782", value: "0782", name: "Lucas Moreno" },
+  { id: "demo-0819", value: "0819", name: "Zara Ahmed" },
+  { id: "demo-0863", value: "0863", name: "Theo Bennett" },
+  { id: "demo-0914", value: "0914", name: "Mei Chen" },
+  { id: "demo-0971", value: "0971", name: "Sam Okafor" },
+  { id: "demo-1028", value: "1028", name: "Clara Fischer" },
+  { id: "demo-1084", value: "1084", name: "Ibrahim Ali" },
+  { id: "demo-1137", value: "1137", name: "Lena Kowalski" },
+  { id: "demo-1195", value: "1195", name: "Ravi Menon" },
+  { id: "demo-1246", value: "1246", name: "Amara Brooks" },
+  { id: "demo-1302", value: "1302", name: "Nico Laurent" },
 ];
 
 export const initialDrawState: DrawState = {
   event: null,
-  entrants: mockEntrants,
-  available: mockEntrants,
+  entries: mockEntries,
+  available: mockEntries,
   winners: [],
   current: null,
   isRolling: false,
-  fileName: "Mock runners.csv",
-  message: "24 entrants ready to draw",
+  entryMode: "csv",
+  manualText: "",
+  numberTotal: 25,
+  fileName: "Sample entries.csv",
+  message: "24 entries ready to draw",
   error: "",
 };
 
@@ -77,10 +86,13 @@ function isStoredState(value: unknown): value is DrawState {
 
   const state = value as Partial<DrawState>;
   return (
-    Array.isArray(state.entrants) &&
+    Array.isArray(state.entries) &&
     Array.isArray(state.available) &&
     Array.isArray(state.winners) &&
     typeof state.isRolling === "boolean" &&
+    ["csv", "manual", "numbers"].includes(state.entryMode ?? "") &&
+    typeof state.manualText === "string" &&
+    typeof state.numberTotal === "number" &&
     typeof state.fileName === "string" &&
     typeof state.message === "string" &&
     typeof state.error === "string"
@@ -195,62 +207,84 @@ function parseCsvLine(line: string) {
   return cells;
 }
 
-export function parseEntrantsCsv(csv: string) {
+export function parseEntriesCsv(csv: string) {
   const lines = csv
     .replace(/^\uFEFF/, "")
     .split(/\r?\n/)
     .filter((line) => line.trim().length > 0);
 
   if (lines.length < 2) {
-    throw new Error("Add a header row and at least one entrant.");
+    throw new Error("Add a header row and at least one entry.");
   }
 
   const headers = parseCsvLine(lines[0]).map((header) =>
     header.toLowerCase().replace(/[\s_-]+/g, ""),
   );
-  const bibIndex = headers.findIndex((header) =>
-    ["bib", "bibnumber", "number"].includes(header),
+  const numberIndex = headers.findIndex((header) =>
+    ["number", "entry", "entrynumber"].includes(header),
   );
   const nameIndex = headers.findIndex((header) =>
-    ["name", "fullname", "participantname"].includes(header),
+    ["name", "fullname", "displayname"].includes(header),
   );
 
-  if (bibIndex === -1) {
-    throw new Error('The CSV needs a "bib number" column.');
+  if (numberIndex === -1) {
+    throw new Error('The CSV needs a "number" column.');
   }
 
-  const entrants = lines.slice(1).map((line, rowIndex) => {
+  const entries = lines.slice(1).map((line, rowIndex) => {
     const cells = parseCsvLine(line);
-    const bib = cells[bibIndex]?.trim();
+    const value = cells[numberIndex]?.trim();
     const name = nameIndex === -1 ? undefined : cells[nameIndex]?.trim();
 
-    if (!bib) {
-      throw new Error(`Bib number is missing on row ${rowIndex + 2}.`);
+    if (!value) {
+      throw new Error(`Number is missing on row ${rowIndex + 2}.`);
     }
 
-    return { bib, name: name || undefined };
+    return {
+      id: `csv-${rowIndex}-${value}`,
+      value,
+      name: name || undefined,
+    };
   });
-  const uniqueBibs = new Set(entrants.map((entrant) => entrant.bib));
+  const uniqueNumbers = new Set(entries.map((entry) => entry.value));
 
-  if (uniqueBibs.size !== entrants.length) {
-    throw new Error("Every bib number must be unique.");
+  if (uniqueNumbers.size !== entries.length) {
+    throw new Error("Every CSV number must be unique.");
   }
 
-  return entrants;
+  return entries;
 }
 
-export function randomEntrant(entrants: Entrant[], excludedBib?: string) {
-  if (entrants.length === 0) {
+export function entriesFromText(text: string) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((value, index) => ({
+      id: `manual-${index}-${value}`,
+      value,
+    }));
+}
+
+export function numberedEntries(total: number) {
+  return Array.from({ length: total }, (_, index) => ({
+    id: `number-${index + 1}`,
+    value: String(index + 1),
+  }));
+}
+
+export function randomEntry(entries: Entry[], excludedId?: string) {
+  if (entries.length === 0) {
     return null;
   }
 
-  if (entrants.length === 1) {
-    return entrants[0];
+  if (entries.length === 1) {
+    return entries[0];
   }
 
-  let selected = entrants[Math.floor(Math.random() * entrants.length)];
-  while (selected.bib === excludedBib) {
-    selected = entrants[Math.floor(Math.random() * entrants.length)];
+  let selected = entries[Math.floor(Math.random() * entries.length)];
+  while (selected.id === excludedId) {
+    selected = entries[Math.floor(Math.random() * entries.length)];
   }
   return selected;
 }

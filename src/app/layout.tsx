@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bib Draw | Lucky Draw Picker",
-  description: "Import race entrants and draw three bib number winners.",
+  title: "Lucky Draw Picker",
+  description: "Create an event, add entries, and draw random winners.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
