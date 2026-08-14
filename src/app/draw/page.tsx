@@ -35,16 +35,16 @@ export default function DrawPage() {
       return;
     }
 
-    let index = Math.floor(Math.random() * state.available.length);
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const interval = window.setInterval(
       () => {
-        index = (index + 1) % state.available.length;
-        setRollingEntrant(state.available[index]);
+        setRollingEntrant((previous) =>
+          randomEntrant(state.available, previous?.bib),
+        );
       },
-      reducedMotion ? 180 : 55,
+      reducedMotion ? 120 : 24,
     );
 
     return () => window.clearInterval(interval);

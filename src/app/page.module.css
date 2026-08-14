@@ -602,7 +602,7 @@
 }
 
 .rollingEntrant {
-  animation: rollTick 55ms linear both;
+  animation: rollTick 24ms linear both;
 }
 
 .drawnEntrant p,

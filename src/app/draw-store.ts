@@ -240,9 +240,17 @@ export function parseEntrantsCsv(csv: string) {
 }
 
 export function randomEntrant(entrants: Entrant[], excludedBib?: string) {
-  const candidates =
-    entrants.length > 1 && excludedBib
-      ? entrants.filter((entrant) => entrant.bib !== excludedBib)
-      : entrants;
-  return candidates[Math.floor(Math.random() * candidates.length)] ?? null;
+  if (entrants.length === 0) {
+    return null;
+  }
+
+  if (entrants.length === 1) {
+    return entrants[0];
+  }
+
+  let selected = entrants[Math.floor(Math.random() * entrants.length)];
+  while (selected.bib === excludedBib) {
+    selected = entrants[Math.floor(Math.random() * entrants.length)];
+  }
+  return selected;
 }
