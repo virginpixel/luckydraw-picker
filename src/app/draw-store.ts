@@ -59,18 +59,20 @@ export const mockEntries: Entry[] = [
   { id: "demo-1302", value: "1302", name: "Nico Laurent" },
 ];
 
+const defaultNumberEntries = numberedEntries(25);
+
 export const initialDrawState: DrawState = {
   event: null,
-  entries: mockEntries,
-  available: mockEntries,
+  entries: defaultNumberEntries,
+  available: defaultNumberEntries,
   winners: [],
   current: null,
   isRolling: false,
-  entryMode: "csv",
+  entryMode: "numbers",
   manualText: "",
   numberTotal: 25,
   fileName: "Sample entries.csv",
-  message: "24 entries ready to draw",
+  message: "Numbers 1 to 25 ready",
   error: "",
 };
 

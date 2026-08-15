@@ -12,6 +12,7 @@ import {
   parseEntriesCsv,
   useDrawStore,
 } from "./draw-store";
+import ThemeToggle from "./theme-toggle";
 import styles from "./page.module.css";
 
 export default function Home() {
@@ -71,21 +72,6 @@ export default function Home() {
     setEventName("");
     setWinnerCount("3");
     setSetupError("");
-  }
-
-  function resetEvent() {
-    setState((current) => ({
-      ...current,
-      available: current.entries,
-      winners: Array.from(
-        { length: current.event?.winnerCount ?? 0 },
-        () => null,
-      ),
-      current: null,
-      isRolling: false,
-      message: `${current.entries.length} entries ready to draw`,
-      error: "",
-    }));
   }
 
   function selectMode(mode: EntryMode) {
@@ -193,9 +179,14 @@ export default function Home() {
       <main className={`${styles.page} ${styles.setupPage}`}>
         <section className={styles.setupShell}>
           <div className={styles.setupIntro}>
-            <div className={styles.brand}>
-              <span className={styles.brandMark}>L</span>
-              <span>Lucky Draw</span>
+            <div className={styles.setupTopBar}>
+              <div className={styles.brand}>
+                <span className={styles.brandMark} aria-hidden="true">
+                  <span className={styles.brandIcon} />
+                </span>
+                <span>Lucky Draw</span>
+              </div>
+              <ThemeToggle />
             </div>
             <div>
               <p className={styles.eyebrow}>Create an event</p>
@@ -249,16 +240,16 @@ export default function Home() {
     <main className={`${styles.page} ${styles.configPage}`}>
       <header className={styles.configHeader}>
         <div className={styles.brand}>
-          <span className={styles.brandMark}>L</span>
+          <span className={styles.brandMark} aria-hidden="true">
+            <span className={styles.brandIcon} />
+          </span>
           <div className={styles.eventIdentity}>
             <span>Lucky Draw</span>
             <strong>{state.event.name}</strong>
           </div>
         </div>
-        <div className={styles.headerButtons}>
-          <button className={styles.resetButton} onClick={resetEvent} type="button">
-            Reset event
-          </button>
+        <div className={styles.configHeaderActions}>
+          <ThemeToggle />
           <button className={styles.resetButton} onClick={startNewEvent} type="button">
             New event
           </button>
@@ -276,11 +267,11 @@ export default function Home() {
           <div className={styles.modeSelector} aria-label="Entry source">
             <button
               type="button"
-              aria-pressed={state.entryMode === "csv"}
-              onClick={() => selectMode("csv")}
+              aria-pressed={state.entryMode === "numbers"}
+              onClick={() => selectMode("numbers")}
             >
-              CSV
-              <span>Number + name</span>
+              Numbers
+              <span>1 to 100</span>
             </button>
             <button
               type="button"
@@ -292,11 +283,11 @@ export default function Home() {
             </button>
             <button
               type="button"
-              aria-pressed={state.entryMode === "numbers"}
-              onClick={() => selectMode("numbers")}
+              aria-pressed={state.entryMode === "csv"}
+              onClick={() => selectMode("csv")}
             >
-              Numbers
-              <span>1 to 100</span>
+              CSV
+              <span>Number + name</span>
             </button>
           </div>
 
@@ -348,7 +339,7 @@ export default function Home() {
                 className={styles.entriesTextarea}
                 value={state.manualText}
                 onChange={updateManualEntries}
-                placeholder={"Blue team\nTable 12\nAlex Morgan"}
+                placeholder={"Entry 1\nEntry 2\nEntry 3"}
               />
               <p className={styles.helperText}>
                 Each non-empty line becomes one entry.

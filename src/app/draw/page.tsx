@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Entry, randomEntry, useDrawStore } from "../draw-store";
+import ThemeToggle from "../theme-toggle";
 import styles from "../page.module.css";
 
 export default function DrawPage() {
@@ -70,6 +71,18 @@ export default function DrawPage() {
       return false;
     }
 
+    if (pool.length === 1) {
+      setRollingEntry(first);
+      setState((current) => ({
+        ...current,
+        current: first,
+        isRolling: false,
+        message: "Final entry remaining",
+        error: "",
+      }));
+      return true;
+    }
+
     setRollingEntry(first);
     setState((current) => ({
       ...current,
@@ -112,21 +125,31 @@ export default function DrawPage() {
     );
     const drawEnds =
       openSlot === state.winners.length - 1 || updatedAvailable.length === 0;
+    const finalEntry =
+      !drawEnds && updatedAvailable.length === 1
+        ? updatedAvailable[0]
+        : null;
     const selectedCount = openSlot + 1;
 
     setState((current) => ({
       ...current,
       winners: updatedWinners,
       available: updatedAvailable,
-      current: null,
-      isRolling: !drawEnds,
+      current: finalEntry,
+      isRolling: !drawEnds && !finalEntry,
       message: drawEnds
         ? `${selectedCount} ${selectedCount === 1 ? "winner" : "winners"} selected`
-        : `Winner ${selectedCount} confirmed. Rolling the next entry`,
+        : finalEntry
+          ? "Final entry remaining"
+          : `Winner ${selectedCount} confirmed. Rolling the next entry`,
       error: "",
     }));
 
-    if (!drawEnds) {
+    if (finalEntry) {
+      setDrawKey((key) => key + 1);
+    }
+
+    if (!drawEnds && !finalEntry) {
       setRollingEntry(randomEntry(updatedAvailable));
     }
   }
@@ -172,6 +195,23 @@ export default function DrawPage() {
     setConfirmRestart(false);
   }
 
+  function resetEvent() {
+    setState((current) => ({
+      ...current,
+      available: current.entries,
+      winners: Array.from(
+        { length: current.event?.winnerCount ?? 0 },
+        () => null,
+      ),
+      current: null,
+      isRolling: false,
+      message: `${current.entries.length} entries ready to draw`,
+      error: "",
+    }));
+    setRollingEntry(randomEntry(state.entries));
+    setConfirmRestart(false);
+  }
+
   if (!hydrated || !state.event) {
     return <main className={`${styles.page} ${styles.loadingPage}`} />;
   }
@@ -193,9 +233,21 @@ export default function DrawPage() {
           <span>{state.event.name}</span>
           <strong>{progressText}</strong>
         </div>
-        <div className={styles.poolCount}>
-          <strong>{state.available.length}</strong>
-          <span>in pool</span>
+        <div className={styles.drawHeaderUtilities}>
+          <ThemeToggle />
+          <div className={styles.drawHeaderActions}>
+            <div className={styles.poolCount}>
+              <strong>{state.available.length}</strong>
+              <span>in pool</span>
+            </div>
+            <button
+              className={styles.resetButton}
+              onClick={resetEvent}
+              type="button"
+            >
+              Reset event
+            </button>
+          </div>
         </div>
       </header>
 
@@ -269,7 +321,9 @@ export default function DrawPage() {
                 onClick={retake}
                 type="button"
               >
-                Remove and retake
+                {state.available.length === 1
+                  ? "Mark absent and finish"
+                  : "Remove and retake"}
               </button>
             </>
           ) : null}
