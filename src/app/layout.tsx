@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,13 +13,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const basePath = process.env.GITHUB_ACTIONS === "true" ? "/luckydraw-picker" : "";
+
 export const metadata: Metadata = {
   title: "Lucky Draw Picker",
   description: "Create an event, add entries, and draw random winners.",
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: `${basePath}/favicon.png`,
+    shortcut: `${basePath}/favicon.png`,
+    apple: `${basePath}/favicon.png`,
   },
 };
 
@@ -27,6 +30,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable}`}
+      style={
+        {
+          "--brand-icon-url": `url("${basePath}/brand-icon.png")`,
+        } as CSSProperties
+      }
       suppressHydrationWarning
     >
       <head>
