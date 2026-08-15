@@ -13,15 +13,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const basePath = process.env.GITHUB_ACTIONS === "true" ? "/luckydraw-picker" : "";
-
 export const metadata: Metadata = {
   title: "Lucky Draw Picker",
   description: "Create an event, add entries, and draw random winners.",
   icons: {
-    icon: `${basePath}/favicon.png`,
-    shortcut: `${basePath}/favicon.png`,
-    apple: `${basePath}/favicon.png`,
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 
@@ -32,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable}`}
       style={
         {
-          "--brand-icon-url": `url("${basePath}/brand-icon.png")`,
+          "--brand-icon-url": 'url("/brand-icon.png")',
         } as CSSProperties
       }
       suppressHydrationWarning
